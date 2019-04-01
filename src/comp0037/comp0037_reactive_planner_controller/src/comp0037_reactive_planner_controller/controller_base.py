@@ -89,25 +89,31 @@ class ControllerBase(object):
         self.plannerDrawer = plannerDrawer
 
         rospy.loginfo('Driving path to goal with ' + str(len(path.waypoints)) + ' waypoint(s)')
-        
+        path_distance = 0
+        path_theta = 0
+        time_count= 0
         # Drive to each waypoint in turn
         for waypointNumber in range(0, len(path.waypoints)):
             cell = path.waypoints[waypointNumber]
             waypoint = self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(cell.coords)
 
             rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
-
+            
             if self.abortCurrentGoal is True:
                 self.stopRobot()
                 # SAVE DATA
                 data = [path.travelCost, path.angleTurned, len(path.waypoints), 0]
                 save2csv(data)
                 return False
-
-            if self.driveToWaypoint(waypoint) is False:
+            check,distance,theta,time = self.driveToWaypoint(waypoint)
+            path_distance = path_distance +distance
+            path_theta = path_theta + theta
+            time_count = time_count + time
+            if check is False:
                 self.stopRobot()
                 # SAVE DATA
-                data = [path.travelCost, path.angleTurned, len(path.waypoints), 0]
+                time_second = (time_count) * 0.1
+                data = [path.travelCost, path.angleTurned, len(path.waypoints),path_distance,path_theta,time_second,  0]
                 save2csv(data)
                 return False
                 
@@ -117,10 +123,12 @@ class ControllerBase(object):
 
         rospy.loginfo('Rotating to goal orientation (' + str(goalOrientation) + ')')
 
-        goalReached = self.rotateToGoalOrientation(goalOrientation)
-
+        goalReached,goal_theta,time_theta = self.rotateToGoalOrientation(goalOrientation)
+        path_theta = path_theta + goal_theta
+        time_count = time_count+time_theta
+        time_second = (time_count) * 0.1
         # SAVE DATA
-        data = [path.travelCost, path.angleTurned, len(path.waypoints), goalReached]
+        data = [path.travelCost, path.angleTurned, len(path.waypoints),path_distance,path_theta,time_second, goalReached]
         save2csv(data)
         
         # Finish off by rotating the robot to the final configuration
