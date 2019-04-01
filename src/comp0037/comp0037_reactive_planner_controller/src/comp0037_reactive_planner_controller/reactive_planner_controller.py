@@ -1,6 +1,5 @@
 # This class manages the key logic for the reactive planner and
 # controller. This monitors the the robot mtion.
-
 import rospy
 import threading
 from cell import CellLabel

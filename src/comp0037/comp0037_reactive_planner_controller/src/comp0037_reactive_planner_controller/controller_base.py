@@ -8,6 +8,7 @@ from math import pow,atan2,sqrt,pi
 from planned_path import PlannedPath
 import time
 import math
+import csv
 
 # This is the base class of the controller which moves the robot to its goal.
 # could do.
@@ -98,10 +99,16 @@ class ControllerBase(object):
 
             if self.abortCurrentGoal is True:
                 self.stopRobot()
+                # SAVE DATA
+                data = [path.travelCost, path.angleTurned, len(path.waypoints), 0]
+                save2csv(data)
                 return False
 
             if self.driveToWaypoint(waypoint) is False:
                 self.stopRobot()
+                # SAVE DATA
+                data = [path.travelCost, path.angleTurned, len(path.waypoints), 0]
+                save2csv(data)
                 return False
                 
             # Handle ^C
@@ -109,7 +116,31 @@ class ControllerBase(object):
                 return False
 
         rospy.loginfo('Rotating to goal orientation (' + str(goalOrientation) + ')')
+
+        goalReached = self.rotateToGoalOrientation(goalOrientation)
+
+        # SAVE DATA
+        data = [path.travelCost, path.angleTurned, len(path.waypoints), goalReached]
+        save2csv(data)
         
         # Finish off by rotating the robot to the final configuration
-        return self.rotateToGoalOrientation(goalOrientation)
+        return goalReached
  
+
+def save2csv(data):
+
+    # Use to save relevant data about the path to frountier/goal
+    # Change title and dir to what you want
+    # Data is currently for planner i.e. the travel cost and angle turned
+    # for the ideal planner path NOT the actual robot path.
+    # Also includes number of waypoints from the planner path and
+    # if the goal was reached or not.
+    # ADD the robot distance travelled, robot angle turned and the total
+    # ROS time taken please.
+    
+    title = 'initial_frontier_data'
+    dir = '/home/ros_user/catkin_ws_cw2/data/' + title
+    print('saving data')
+    with open(dir,'a') as myfile:
+            wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
+            wr.writerow(data)
