@@ -1,5 +1,5 @@
 import rospy
-
+from queue import Queue
 from explorer_node_base import ExplorerNodeBase
 
 # This class implements a super dumb explorer. It goes through the
@@ -9,14 +9,16 @@ class ExplorerNode(ExplorerNodeBase):
 
     def __init__(self):
         ExplorerNodeBase.__init__(self)
-
+        self.queueM = Queue(0)
+        self.queueF = Queue(0)
         self.blackList = []
 
     def updateFrontiers(self):
-        pass
+        
+        
 
     def chooseNewDestination(self):
-
+        
 
 #         print 'blackList:'
 #         for coords in self.blackList:

@@ -78,15 +78,11 @@ class ExplorerNodeBase(object):
     
     def odometryCallback(self, odometry):
         odometryPose = odometry.pose.pose
-
         pose = Pose2D()
-
         position = odometryPose.position
-        orientation = odometryPose.orientation
-        
         pose.x = position.x
         pose.y = position.y
-        pose.theta = 2 * atan2(orientation.z, orientation.w)
+        pose.theta = 0
         self.pose = pose
 
     # This method determines if a cell is a frontier cell or not. A
@@ -212,7 +208,9 @@ class ExplorerNodeBase(object):
                 if newDestinationAvailable is True:
                     print 'newDestination = ' + str(newDestination)
                     newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
-                    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
+                    print('WROK')
+		    print(self.explorer.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.explorer.pose.x,self.explorer.pose.y)))
+		    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
