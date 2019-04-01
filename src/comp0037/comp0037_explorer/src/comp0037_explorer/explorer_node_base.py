@@ -1,7 +1,8 @@
 import rospy
 import threading
 import math
-
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg  import Pose2D
 from comp0037_mapper.msg import *
 from comp0037_mapper.srv import *
 from comp0037_reactive_planner_controller.srv import *
@@ -23,6 +24,9 @@ class ExplorerNodeBase(object):
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
+	self.pose = Pose2D()
+        # Subscribe to odometry to get pose data
+        self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
 
         # Subscribe to get the map update messages
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
@@ -70,6 +74,20 @@ class ExplorerNodeBase(object):
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
+
+    
+    def odometryCallback(self, odometry):
+        odometryPose = odometry.pose.pose
+
+        pose = Pose2D()
+
+        position = odometryPose.position
+        orientation = odometryPose.orientation
+        
+        pose.x = position.x
+        pose.y = position.y
+        pose.theta = 2 * atan2(orientation.z, orientation.w)
+        self.pose = pose
 
     # This method determines if a cell is a frontier cell or not. A
     # frontier cell is open and has at least one neighbour which is
