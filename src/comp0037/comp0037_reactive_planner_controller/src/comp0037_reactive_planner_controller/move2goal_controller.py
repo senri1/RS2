@@ -56,7 +56,9 @@ class Move2GoalController(ControllerBase):
         dY = waypoint[1] - self.pose.y
         distanceError = sqrt(dX * dX + dY * dY)
         angleError = self.shortestAngularDistance(self.pose.theta, atan2(dY, dX))
-       
+        init_de = distanceError
+        init_ae = angleError
+        time_count = 0
         while (distanceError >= self.distanceErrorTolerance) & (not self.abortCurrentGoal) & (not rospy.is_shutdown()):
             #print("Current Pose: x: {}, y:{} , theta: {}\nGoal: x: {}, y: {}\n".format(self.pose.x, self.pose.y,
             #                                                                           self.pose.theta, waypoint[0],
@@ -94,7 +96,7 @@ class Move2GoalController(ControllerBase):
             self.velocityPublisher.publish(vel_msg)
             if (self.plannerDrawer is not None):
                 self.plannerDrawer.flushAndUpdateWindow()
-                
+            time_count = time_count + 1
             self.rate.sleep()
 
             # Check if the occupancy grid has changed. If so, monitor if we can still reach the
@@ -110,8 +112,9 @@ class Move2GoalController(ControllerBase):
 
         # Stopping our robot after the movement is over
         self.stopRobot()
-
-        return (not self.abortCurrentGoal) & (not rospy.is_shutdown())
+        total_distance = init_de - distanceError
+        total_theta = abs(init_ae)
+        return ((not self.abortCurrentGoal) & (not rospy.is_shutdown(),total_distance,total_theta,time_count)
 
     def rotateToGoalOrientation(self, goalOrientation):
         vel_msg = Twist()
@@ -119,7 +122,8 @@ class Move2GoalController(ControllerBase):
         goalOrientation = math.radians(goalOrientation)
 
         angleError = self.shortestAngularDistance(self.pose.theta, goalOrientation)
-
+        init_ae = angleError
+        t_theta = 0
         if self.enableSettingMapperState is True:
             self.mappingState = False
             self.changeMapperStateService(False)
@@ -137,7 +141,7 @@ class Move2GoalController(ControllerBase):
             self.velocityPublisher.publish(vel_msg)
             if (self.plannerDrawer is not None):
                 self.plannerDrawer.flushAndUpdateWindow()
-                
+            t_theta = t_theta +1    
             self.rate.sleep()
             angleError = self.shortestAngularDistance(self.pose.theta, goalOrientation)
 
@@ -148,4 +152,4 @@ class Move2GoalController(ControllerBase):
             self.mappingState = True
             self.changeMapperStateService(True)
 
-        return (not self.abortCurrentGoal) & (not rospy.is_shutdown())
+        return ((not self.abortCurrentGoal) & (not rospy.is_shutdown()),(init_ae - angleError),t_theta)
