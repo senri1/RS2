@@ -3,6 +3,7 @@ from Queue import Queue
 from explorer_node_base import ExplorerNodeBase
 import math
 from collections import deque
+import random
 
 # This class implements a super super super dumb explorer. It goes through the
 # current map and marks the first cell it sees as the one to go for
@@ -34,7 +35,8 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         self.visitedFrontiers = []
 
     def updateFrontiers(self):
-        
+        print('Updating frontiers')
+        print('Current number of frontiers: ', len(self.FrontierList))
         # Clear queue and put initial pose in qm and MapOpen
         queueM = deque()
         queueF = deque()
@@ -42,7 +44,7 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         MapClose = deque()
         FrontierOpen = deque()
         FroniterClose = deque()
-
+        self.FrontierList[:] = []
         pose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.pose.x,self.pose.y))
         queueM.append(pose)
         MapOpen.append(pose)
@@ -107,7 +109,8 @@ class ExplorerNodeWFD(ExplorerNodeBase):
                         MapOpen.append(cells)
 
             # add p to map close
-            MapClose.append(p) 
+            MapClose.append(p)
+        print('Finished updating frontiers current number of frontiers: ', len(self.FrontierList))
 
 
     def chooseNewDestination(self):
@@ -139,7 +142,7 @@ class ExplorerNodeWFD(ExplorerNodeBase):
                     if visited == candidate:
                         AddCandidate = False
                 if AddCandidate == True:
-                    median.append(candidate)
+                    median.append((candidate, Frontier))
 
         # if median list is empty all frontiers have been explored
         if len(median) == 0:
@@ -147,14 +150,17 @@ class ExplorerNodeWFD(ExplorerNodeBase):
 
         # get the median that is closest to us and send the destination
         for values in median:
-            dX = pose[0] - values[0]
-            dY = pose[1] - values[1]
+            dX = pose[0] - values[0][0]
+            dY = pose[1] - values[0][1]
             current_distance = math.sqrt(dX * dX + dY * dY)
             if current_distance < distance:
                 distance = current_distance
-                destination = values
+                destination = values[1]
 
-        return True, destination
+        destination = random.sample(destination,1)
+        #print("DESTINATION: ", destination)
+        print("Destination is frontier: ", self.isFrontierCell(destination[0][0], destination[0][1]))
+        return True, destination[0]
 
 
     def destinationReached(self, goal, goalReached):
@@ -221,8 +227,3 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         y_median = get_median(y)
         
         return (x_median, y_median)
-        
-
-
-
-
