@@ -37,13 +37,15 @@ class ReactivePlannerController(PlannerControllerBase):
         # If the route is not viable any more, call
         # self.controller.stopDrivingToCurrentGoal()
         count = 0
+        # Check to see if there any waypoints is an obstacle
         for i in range(len(self.currentPlannedPath.waypoints)):
             x = self.currentPlannedPath.waypoints[i].coords[0]
             y = self.currentPlannedPath.waypoints[i].coords[1]
             if self.occupancyGrid.getCell(x,y) == 1:
                 count +=1
-        print('coords',self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(self.currentPlannedPath.waypoints[-1].coords))
-        print('coords',self.occupancyGrid.getCell(self.currentPlannedPath.waypoints[-1].coords[0],self.currentPlannedPath.waypoints[-1].coords[1]) )
+        # print('coords',self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(self.currentPlannedPath.waypoints[-1].coords))
+        # print('coords',self.currentPlannedPath.waypoints[-1].coords[0],self.currentPlannedPath.waypoints[-1].coords[1])
+        # print('coords',self.currentPlannedPath.waypoints[-1].label)
         if count > 0:
             self.controller.stopDrivingToCurrentGoal()
         pass
@@ -52,6 +54,7 @@ class ReactivePlannerController(PlannerControllerBase):
 
         # Get the goal coordinate in cells
         goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
+        # print('goal_coord',self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(goalCellCoords))
         # Reactive planner main loop - keep iterating until the goal is reached or the robot gets
         # stuck.
         planner_count = 0
@@ -94,7 +97,7 @@ class ReactivePlannerController(PlannerControllerBase):
                                                           goal.theta, self.planner.getPlannerDrawer())
 
             rospy.logerr('goalReached=%d', goalReached)
-        print('Performance Rating = ', planner_count)
+        print('Performance Rating = '+ str(planner_count))
         return goalReached
             
             
