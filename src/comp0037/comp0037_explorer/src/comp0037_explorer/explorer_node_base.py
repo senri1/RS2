@@ -1,6 +1,7 @@
 import rospy
 import threading
 import math
+import csv
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg  import Pose2D
 from comp0037_mapper.msg import *
@@ -255,9 +256,15 @@ class ExplorerNodeBase(object):
         entropy -= pCMap * math.log(pCMap)
         
         #save data
-        f = open("entropy_data.txt","a+")
-        f.write("%d\n" % entropy)
-        f.close()     
+        #f = open("entropy_data.txt","a+")
+        #f.write("%d\n" % entropy)
+        #f.close()
+        dir = '/home/ros_user/catkin_ws_cw2/data/entropy_data'
+        #print('Saving entropy')
+        with open(dir,'a') as myfile:
+            wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
+            wr.writerow([entropy]) 
+
         self.timer_restart()
     
     def timer_restart(self):
