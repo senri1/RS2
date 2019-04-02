@@ -74,6 +74,9 @@ class ControllerBase(object):
 
     def stopRobot(self):
         stopMessage = Twist()
+        stopMessage.angular.x = 0
+        stopMessage.angular.y = 0
+        stopMessage.angular.z = 6.28 
         self.velocityPublisher.publish(stopMessage)
 
     # Handle the logic of rotating the robot to its final orientation
@@ -103,7 +106,7 @@ class ControllerBase(object):
                 self.stopRobot()
                 # SAVE DATA
                 data = [path.travelCost, path.angleTurned, len(path.waypoints), 0]
-                save2csv(data)
+                # save2csv(data)
                 return False
             check,distance,theta,time = self.driveToWaypoint(waypoint)
             path_distance = path_distance +distance
@@ -114,7 +117,7 @@ class ControllerBase(object):
                 # SAVE DATA
                 time_second = (time_count) * 0.1
                 data = [path.travelCost, path.angleTurned, len(path.waypoints),path_distance,path_theta,time_second,  0]
-                save2csv(data)
+                # save2csv(data)
                 return False
                 
             # Handle ^C
@@ -129,7 +132,7 @@ class ControllerBase(object):
         time_second = (time_count) * 0.1
         # SAVE DATA
         data = [path.travelCost, path.angleTurned, len(path.waypoints),path_distance,path_theta,time_second, goalReached]
-        save2csv(data)
+        # save2csv(data)
         
         # Finish off by rotating the robot to the final configuration
         return goalReached
