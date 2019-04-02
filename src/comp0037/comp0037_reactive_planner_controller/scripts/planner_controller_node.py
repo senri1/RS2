@@ -85,7 +85,7 @@ class PlannerControllerNode(object):
         self.robotController = Move2GoalController(self.occupancyGrid)
 
     def createPlannerController(self):
-        if rospy.get_param('use_reactive_planner_controller', False) is True:
+        if rospy.get_param('use_reactive_planner_controller', False) is True:  # Last false mean use reactive
             self.plannerController = ReactivePlannerController(self.occupancyGrid, self.planner, self.robotController)
         else:
             self.plannerController = PassivePlannerController(self.occupancyGrid, self.planner, self.robotController)

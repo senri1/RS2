@@ -1,6 +1,7 @@
 import rospy
 import threading
 import math
+import csv
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg  import Pose2D
 from comp0037_mapper.msg import *
@@ -25,11 +26,11 @@ class ExplorerNodeBase(object):
         rospy.wait_for_service('drive_to_goal')
         self.driveToGoalService = rospy.ServiceProxy('drive_to_goal', Goal)
         rospy.loginfo('Got the drive_to_goal service')
-
+        self.time_activate = threading.Timer(5.0,self.computeEntropy)
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
-	self.pose = Pose2D()
+        self.pose = Pose2D()
         # Subscribe to odometry to get pose data
         self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
 
@@ -212,7 +213,7 @@ class ExplorerNodeBase(object):
                 if newDestinationAvailable is True:
                     print 'newDestination = ' + str(newDestination)
                     newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
-		    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
+                    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
 		    
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
@@ -222,7 +223,7 @@ class ExplorerNodeBase(object):
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
-
+        self.time_activate.start()
         keepRunning = True
         
         while (rospy.is_shutdown() is False) & (keepRunning is True):
@@ -241,5 +242,24 @@ class ExplorerNodeBase(object):
                 explorerThread.join()
                 keepRunning = False
 
-            
+    def computeEntropy(self):
+        entropy=0
+        unknownCells = 0
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                if self.checkIfCellIsUnknown(x, y,0,0) == True:
+                    unknownCells += 1
+        
+        pCMap = math.log(2)* abs(unknownCells)
+
+        #for every realisation map???
+        entropy -= pCMap * math.log(pCMap)
+        
+        #save data
+        print('Saving entropy')
+        dir = '/home/ros_user/catkin_ws_cw2/data/entropy_data'
+        print('Saving entropy')
+        with open(dir,'a') as myfile:
+            wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
+            wr.writerow([entropy]) 
             

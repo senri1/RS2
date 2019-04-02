@@ -2,6 +2,8 @@
 # controller. This monitors the the robot mtion.
 import rospy
 import threading
+import time
+import math
 import csv
 from cell import CellLabel
 from planner_controller_base import PlannerControllerBase
@@ -14,8 +16,9 @@ class ReactivePlannerController(PlannerControllerBase):
 
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.gridUpdateLock =  threading.Condition()
-	self.time_activate = threading.Timer(5.0,self.computeEntropy)
+        self.time_activate = threading.Timer(5.0,self.computeEntropy)
         self.time_activate.start()
+        self.time_count = time.time()
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -24,10 +27,10 @@ class ReactivePlannerController(PlannerControllerBase):
         self.occupancyGrid.updateGridFromVector(mapUpdateMessage.occupancyGrid)
         self.planner.handleChangeToOccupancyGrid()
         self.gridUpdateLock.release()
-	if time.time() - self.time_count > 5:
-             print('5 seconds')
-             self.computeEntropy()
-             self.time_count = time.time()
+        if time.time() - self.time_count > 5:
+            print('5 seconds')
+            self.computeEntropy()
+            self.time_count = time.time()
         # If we are not currently following any route, drop out here.
         if self.currentPlannedPath is None:
             return
@@ -62,8 +65,14 @@ class ReactivePlannerController(PlannerControllerBase):
         dir = "/home/ros_user/catkin_ws_cw2/data/entropy_data"
         with open(dir,'a') as myfile:
             wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
-            wr.writerow(entropy) 		
+            wr.writerow([entropy]) 		
 	
+    def checkIfCellIsUnknown(self, x, y):
+        newX = x 
+        newY = y
+        return (newX >= 0) & (newX < self.occupancyGrid.getWidthInCells()) \
+            & (newY >= 0) & (newY < self.occupancyGrid.getHeightInCells()) \
+            & (self.occupancyGrid.getCell(newX, newY) == 0.5)
 
     def driveToGoal(self, goal):
 
@@ -102,6 +111,7 @@ class ReactivePlannerController(PlannerControllerBase):
             # if the goal was successfully reached. The controller
             # should stop the robot and return False if the
             # stopDrivingToCurrentGoal method is called.
+            print('Using reactive')
             goalReached = self.controller.drivePathToGoal(self.currentPlannedPath, \
                                                           goal.theta, self.planner.getPlannerDrawer())
 
