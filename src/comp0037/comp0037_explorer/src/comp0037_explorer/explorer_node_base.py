@@ -18,12 +18,6 @@ class ExplorerNodeBase(object):
         rospy.init_node('explorer')
 
 	# Create necessary queues
-	self.MapOpen = deque()
-        self.queueM = deque()
-        self.queueF = deque()
-        self.MapClose = deque()
-        self.FrontierOpen = deque()
-        self.FroniterClose = deque()
         self.FrontierList = []
 
         # Get the drive robot service
@@ -81,7 +75,7 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
         
         # Update the frontiers
-        self.updateFrontiers(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.pose.x,self.pose.y)))
+        self.updateFrontiers()
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
@@ -212,15 +206,14 @@ class ExplorerNodeBase(object):
                 # messages. To do this, we get the robot to
 		
                 # Create a new robot waypoint if required
-                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination(self.explorer.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.explorer.pose.x,self.explorer.pose.y)))
+                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
 
                 # Convert to world coordinates, because this is what the robot understands
                 if newDestinationAvailable is True:
                     print 'newDestination = ' + str(newDestination)
                     newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
-		    print('before')
 		    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
-		    print('after')
+		    
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True

@@ -31,42 +31,49 @@ class ExplorerNodeWFD(ExplorerNodeBase):
     def __init__(self):
         ExplorerNodeBase.__init__(self)
         self.blackList = []
-                   
+        self.visitedFrontiers = []
 
-    def updateFrontiers(self,pose):
+    def updateFrontiers(self):
+        
+        # Clear queue and put initial pose in qm and MapOpen
+        queueM = deque()
+        queueF = deque()
+        MapOpen = deque()
+        MapClose = deque()
+        FrontierOpen = deque()
+        FroniterClose = deque()
 
-        # Clear queue and put initial pose in qm and MapOpen   
-	self.queueM.clear() 
-        self.queueM.append(pose)
-        self.MapOpen.append(pose)
+        pose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.pose.x,self.pose.y))
+        queueM.append(pose)
+        MapOpen.append(pose)
 
         # While qm is not empty loop over
-        while len(self.queueM) != 0:
-
+        while len(queueM) != 0:
+            
             #remove element from qm
-            p = self.queueM.pop()
+            p = queueM.pop()
 
             # If the removed element is in MapClose go back to start of while loop
-            if self.markedAs(p)["MapClose"] == True:
+            if self.markedAs(p, MapOpen, MapClose, FrontierOpen, FroniterClose)["MapClose"] == True:
                 continue
 
             # If p is a frontier cells then do this
             if self.isFrontierCell(p[0],p[1]) is True:
 
                 # clear qf list, create new list for frontier and p in both
-                self.queueF.clear()
+                queueF.clear()
                 NewFrontier = deque()
-                self.queueF.append(p)
-                self.FrontierOpen.append(p)
+                queueF.append(p)
+                FrontierOpen.append(p)
 
                 # while qf is not empty loop over
-                while len(self.queueF) != 0:
+                while len(queueF) != 0:
 
                     # get element form qf
-                    q = self.queueF.pop()
+                    q = queueF.pop()
 
                     # if q is in MapClose or FrontierClose return to top of while loop
-                    mark = self.markedAs(p)
+                    mark = self.markedAs(q, MapOpen, MapClose, FrontierOpen, FroniterClose)
                     if (mark["MapClose"] == True) or (mark["FrontierClose"] == True):
                         continue
 
@@ -76,56 +83,63 @@ class ExplorerNodeWFD(ExplorerNodeBase):
 
                         # for all cells adjacent to q add to qf if they are not marked as follows                    
                         for w in self.getAllAdjacentCells(q):
-                            mark = self.markedAs(w) 
-                            if (mark["FrontierOpen"] == False) or (mark["FrontierClose"] == False) or (mark["MapClose"] == False):
-                                self.queueF.append(w)
-				self.FrontierOpen.append(w)
-                    
+                            mark = self.markedAs(w, MapOpen, MapClose, FrontierOpen, FroniterClose) 
+                            if (mark["FrontierOpen"] == False) and (mark["FrontierClose"] == False) and (mark["MapClose"] == False):
+                                queueF.append(w)
+                                FrontierOpen.append(w)
+                
                     # add q to frontier close
-                    self.FroniterClose.append(q)
+                    FroniterClose.append(q)
 
                 # save NewFrontier
                 self.FrontierList.append(NewFrontier)
 
                 # add every point in NewFrontier to MapClose
                 for points in list(NewFrontier):
-                    self.MapClose.append(points)
+                    MapClose.append(points)
 
             # for all cells adjacent to p, add to qm and MapOpen if they meet the conditions
             for cells in self.getAllAdjacentCells(p):
-                mark = self.markedAs(cells)
-                if (mark["MapOpen"] == False) or (mark["MapClose"] == False):
+                mark = self.markedAs(cells, MapOpen, MapClose, FrontierOpen, FroniterClose)
+                if (mark["MapOpen"] == False) and (mark["MapClose"] == False):
                     if self.checkAdjacent(cells) == True:
-                        self.queueM.append(cells)
-                        self.MapOpen.append(cells)
+                        queueM.append(cells)
+                        MapOpen.append(cells)
 
             # add p to map close
-            self.MapClose.append(p)
+            MapClose.append(p) 
 
 
-    def chooseNewDestination(self, pose):
+    def chooseNewDestination(self):
 
+        # get current pose
+        pose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.pose.x,self.pose.y))
         median = []
         AddCandidate = True
         distance = float("inf")
         destination = None
  
         # update the frontiers 
-        self.updateFrontiers(pose)
+        self.updateFrontiers()
  
         # if after updating it is still empty, we've visited everything and we're done
         if len(self.FrontierList) == 0:
             return False, None
 
         # get median of every frontier, if the median is not in a unreachable
-        # place then add to list median
+        # place and has not been visited before then add to list median
         for Frontier in self.FrontierList:
-            candidate = self.getMedianOfFrontier(Frontier)
-            for blacklisted in self.blackList:
-                if blacklisted == candidate:
-                    AddCandidate = False
-            if AddCandidate == True:
-                median.append(candidate)
+            if len(Frontier) != 0:
+                AddCandidate = True
+                candidate = self.getMedianOfFrontier(Frontier)
+                for blacklisted in self.blackList:
+                    if blacklisted == candidate:
+                        AddCandidate = False
+                for visited in self.visitedFrontiers:
+                    if visited == candidate:
+                        AddCandidate = False
+                if AddCandidate == True:
+                    median.append(candidate)
 
         # if median list is empty all frontiers have been explored
         if len(median) == 0:
@@ -145,27 +159,30 @@ class ExplorerNodeWFD(ExplorerNodeBase):
 
     def destinationReached(self, goal, goalReached):
         # if the goal was not reached add the goal to blacklist
+        if goalReached is True:
+            self.visitedFrontiers.append(goal)
         if goalReached is False:
             self.blackList.append(goal)
 
-    def markedAs(self, p):
+
+    def markedAs(self, p, MapOpen, MapClose, FrontierOpen, FrontierClose):
         # check if p (the coordinate) is in any of the lists and return
         # dict indicating which it is in/not in
         marked_as = {"MapOpen": False, "MapClose": False, "FrontierOpen": False, "FrontierClose": False}
     
-        for cell in list(self.MapOpen):
+        for cell in list(MapOpen):
                 if cell == p:
                     marked_as["MapOpen"] = True
 
-        for cell in list(self.MapClose): 
+        for cell in list(MapClose): 
                 if cell == p:
                     marked_as["MapClose"] = True
         
-        for cell in list(self.FrontierOpen):
+        for cell in list(FrontierOpen):
                 if cell == p:
                     marked_as["FrontierOpen"] = True
         
-        for cell in list(self.FroniterClose):
+        for cell in list(FrontierClose):
                 if cell == p:
                     marked_as["FrontierClose"] = True
         
@@ -205,3 +222,7 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         
         return (x_median, y_median)
         
+
+
+
+
