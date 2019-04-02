@@ -25,7 +25,7 @@ class ExplorerNodeBase(object):
         rospy.wait_for_service('drive_to_goal')
         self.driveToGoalService = rospy.ServiceProxy('drive_to_goal', Goal)
         rospy.loginfo('Got the drive_to_goal service')
-        self.time_activate = threading.Timer(5.0,self.computeEntropy)
+        self.timer_restart()
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
@@ -222,7 +222,6 @@ class ExplorerNodeBase(object):
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
-        self.time_activate.start()
         keepRunning = True
         
         while (rospy.is_shutdown() is False) & (keepRunning is True):
@@ -242,6 +241,7 @@ class ExplorerNodeBase(object):
                 keepRunning = False
                     
     def computeEntropy(self):
+        print('entropy')
         entropy=0
         unknownCells = 0
         for x in range(0, self.occupancyGrid.getWidthInCells()):
@@ -258,5 +258,12 @@ class ExplorerNodeBase(object):
         f = open("entropy_data.txt","a+")
         f.write("%d\n" % entropy)
         f.close()     
+        self.timer_restart()
+    
+    def timer_restart(self):
+        self.entropy_calc = threading.Timer(5,self.computeEntropy)
+        self.entropy_calc.deamon = True
+        self.entropy_calc.start()
+        pass
             
             
