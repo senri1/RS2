@@ -74,9 +74,15 @@ class ControllerBase(object):
 
     def stopRobot(self):
         stopMessage = Twist()
+        for i in range(10):
+            stopMessage.angular.x = 0
+            stopMessage.angular.y = 0
+            stopMessage.angular.z = 0.628 
+            self.velocityPublisher.publish(stopMessage)
+            self.rate.sleep()
         stopMessage.angular.x = 0
         stopMessage.angular.y = 0
-        stopMessage.angular.z = 6.28 
+        stopMessage.angular.z = 0 
         self.velocityPublisher.publish(stopMessage)
 
     # Handle the logic of rotating the robot to its final orientation
@@ -99,9 +105,7 @@ class ControllerBase(object):
         for waypointNumber in range(0, len(path.waypoints)):
             cell = path.waypoints[waypointNumber]
             waypoint = self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(cell.coords)
-
             rospy.loginfo("Driving to waypoint (%f, %f)", waypoint[0], waypoint[1])
-            
             if self.abortCurrentGoal is True:
                 self.stopRobot()
                 # SAVE DATA
