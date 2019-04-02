@@ -156,8 +156,9 @@ class ExplorerNodeWFD(ExplorerNodeBase):
                 destination = values[1]
 
         destination = random.sample(destination,1)
-        print("IS IT A FRONTIER? ", self.isFrontierCell(destination[0], destination[1]))
-        return True, destination
+        print("DESTINATION: ", destination)
+        print("IS IT A FRONTIER? ", self.isFrontierCell(destination[0][0], destination[0][1]))
+        return True, destination[0]
 
 
     def destinationReached(self, goal, goalReached):
