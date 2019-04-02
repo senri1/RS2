@@ -148,7 +148,7 @@ def save2csv(data):
     
     title = 'initial_frontier_data'
     dir = '/home/ros_user/catkin_ws_cw2/data/' + title
-    print('saving data')
+    print('Saving data')
     with open(dir,'a') as myfile:
             wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
             wr.writerow(data)

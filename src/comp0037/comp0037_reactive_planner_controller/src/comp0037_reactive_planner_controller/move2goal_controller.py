@@ -114,7 +114,7 @@ class Move2GoalController(ControllerBase):
         self.stopRobot()
         total_distance = init_de - distanceError
         total_theta = abs(init_ae)
-        return ((not self.abortCurrentGoal) & (not rospy.is_shutdown(),total_distance,total_theta,time_count)
+        return ((not self.abortCurrentGoal) & (not rospy.is_shutdown()),total_distance,total_theta,time_count)
 
     def rotateToGoalOrientation(self, goalOrientation):
         vel_msg = Twist()
