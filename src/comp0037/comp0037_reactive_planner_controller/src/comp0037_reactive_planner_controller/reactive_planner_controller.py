@@ -36,17 +36,25 @@ class ReactivePlannerController(PlannerControllerBase):
                 
         # If the route is not viable any more, call
         # self.controller.stopDrivingToCurrentGoal()
-
+        count = 0
+        for i in range(len(self.currentPlannedPath.waypoints)):
+            x = self.currentPlannedPath.waypoints[i].coords[0]
+            y = self.currentPlannedPath.waypoints[i].coords[1]
+            if self.occupancyGrid.getCell(x,y) == 1:
+                count +=1
+        print('coords',self.occupancyGrid.getWorldCoordinatesFromCellCoordinates(self.currentPlannedPath.waypoints[-1].coords))
+        print('coords',self.occupancyGrid.getCell(self.currentPlannedPath.waypoints[-1].coords[0],self.currentPlannedPath.waypoints[-1].coords[1]) )
+        if count > 0:
+            self.controller.stopDrivingToCurrentGoal()
         pass
     
     def driveToGoal(self, goal):
 
         # Get the goal coordinate in cells
         goalCellCoords = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((goal.x,goal.y))
-
         # Reactive planner main loop - keep iterating until the goal is reached or the robot gets
         # stuck.
-
+        planner_count = 0
         goalReached = False
         
         while (goalReached is False) & (rospy.is_shutdown() is False):
@@ -61,16 +69,22 @@ class ReactivePlannerController(PlannerControllerBase):
             # Plan a path using the current occupancy grid
             self.gridUpdateLock.acquire()
             pathToGoalFound = self.planner.search(startCellCoords, goalCellCoords)
+            planner_count += 1
             self.gridUpdateLock.release()
 
             # If we can't reach the goal, give up and return
             if pathToGoalFound is False:
                 rospy.logwarn("Could not find a path to the goal at (%d, %d)", \
                               goalCellCoords[0], goalCellCoords[1])
+                print('Performance Rating = ', planner_count)
                 return False
             
             # Extract the path
+            # pastPlannedPath = self.currentPlannedPath
             self.currentPlannedPath = self.planner.extractPathToGoal()
+            # if (pastPlannedPath == self.currentPlannedPath) or (self.goal_unreachable == True):
+            #     print('Goal not Reachable')
+            #     return(False)
 
             # Drive along the path towards the goal. This returns True
             # if the goal was successfully reached. The controller
@@ -80,7 +94,7 @@ class ReactivePlannerController(PlannerControllerBase):
                                                           goal.theta, self.planner.getPlannerDrawer())
 
             rospy.logerr('goalReached=%d', goalReached)
-
+        print('Performance Rating = ', planner_count)
         return goalReached
             
             

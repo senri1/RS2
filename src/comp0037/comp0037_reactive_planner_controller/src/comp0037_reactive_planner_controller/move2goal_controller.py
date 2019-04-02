@@ -6,6 +6,7 @@ from math import pow,atan2,sqrt
 from comp0037_reactive_planner_controller.planned_path import PlannedPath
 from comp0037_reactive_planner_controller.controller_base import ControllerBase
 from comp0037_mapper.srv import *
+from comp0037_mapper.msg import MapUpdate
 import math
 import angles
 
@@ -91,7 +92,7 @@ class Move2GoalController(ControllerBase):
                 elif (self.mappingState is False) and (abs(vel_msg.angular.z) < math.radians(0.1)):
                     self.mappingState = True
                     self.changeMapperStateService(True)
-            
+
             # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)
             if (self.plannerDrawer is not None):
@@ -101,10 +102,12 @@ class Move2GoalController(ControllerBase):
 
             # Check if the occupancy grid has changed. If so, monitor if we can still reach the
             # goal or not
-            #if self.occupancyGridHasChanged is True:
-            #    if self.checkIfWaypointIsReachable(waypoint) is False:
-            #        return False
-            #    self.occupancyGridHasChanged = False
+
+            # if self.checkIfWaypointIsReachable(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates(waypoint)) is False:
+            #     print('Waypoint not Reachable')
+            #     total_distance = init_de - distanceError
+            #     total_theta = abs(init_ae)
+            #     return (False,total_distance,total_theta,time_count)
 
             distanceError = sqrt(pow((waypoint[0] - self.pose.x), 2) + pow((waypoint[1] - self.pose.y), 2))
             angleError = self.shortestAngularDistance(self.pose.theta,
@@ -135,7 +138,7 @@ class Move2GoalController(ControllerBase):
             # angular velocity in the z-axis:
             vel_msg.angular.x = 0
             vel_msg.angular.y = 0
-            vel_msg.angular.z = max(-5.0, min(self.angleErrorGain * angleError, 5.0))
+            vel_msg.angular.z = max(-5.0, min(self.angleErrorGain * angleError, 5.0)) 
 
             # Publishing our vel_msg
             self.velocityPublisher.publish(vel_msg)
@@ -153,3 +156,20 @@ class Move2GoalController(ControllerBase):
             self.changeMapperStateService(True)
 
         return ((not self.abortCurrentGoal) & (not rospy.is_shutdown()),(init_ae - angleError),t_theta)
+
+    def checkIfWaypointIsReachable(self,waypoint):
+        x = waypoint[0]
+        y = waypoint[1]
+        if self.occupancyGrid.getCell(x,y) == 1:
+            return False
+        else:
+            return True
+    
+    # def listener():
+    #     rospy.init_node('listener', anonymous=True)
+    #     rospy.Subscriber('updated_map', MapUpdate, self.occupancyGridHasChanged)
+    # def occupancyGridHasChanged(self, mum):
+    #     print('Changed')
+    #     self.check_OG = True
+        
+        
