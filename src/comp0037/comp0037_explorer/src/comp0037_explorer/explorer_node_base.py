@@ -20,7 +20,7 @@ class ExplorerNodeBase(object):
 
 	# Create necessary queues
         self.FrontierList = []
-
+        
         # Get the drive robot service
         rospy.loginfo('Waiting for service drive_to_goal')
         rospy.wait_for_service('drive_to_goal')
@@ -256,7 +256,6 @@ class ExplorerNodeBase(object):
         entropy -= pCMap * math.log(pCMap)
         
         #save data
-        print('Saving entropy')
         dir = '/home/ros_user/catkin_ws_cw2/data/entropy_data'
         print('Saving entropy')
         with open(dir,'a') as myfile:

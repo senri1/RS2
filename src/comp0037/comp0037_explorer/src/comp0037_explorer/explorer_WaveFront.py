@@ -35,7 +35,8 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         self.visitedFrontiers = []
 
     def updateFrontiers(self):
-        
+        print('Updating frontiers')
+        print('Current number of frontiers: ', len(self.FrontierList))
         # Clear queue and put initial pose in qm and MapOpen
         queueM = deque()
         queueF = deque()
@@ -43,7 +44,7 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         MapClose = deque()
         FrontierOpen = deque()
         FroniterClose = deque()
-
+        self.FrontierList[:] = []
         pose = self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.pose.x,self.pose.y))
         queueM.append(pose)
         MapOpen.append(pose)
@@ -108,7 +109,8 @@ class ExplorerNodeWFD(ExplorerNodeBase):
                         MapOpen.append(cells)
 
             # add p to map close
-            MapClose.append(p) 
+            MapClose.append(p)
+        print('Finished updating frontiers current number of frontiers: ', len(self.FrontierList))
 
 
     def chooseNewDestination(self):
@@ -156,8 +158,8 @@ class ExplorerNodeWFD(ExplorerNodeBase):
                 destination = values[1]
 
         destination = random.sample(destination,1)
-        print("DESTINATION: ", destination)
-        print("IS IT A FRONTIER? ", self.isFrontierCell(destination[0][0], destination[0][1]))
+        #print("DESTINATION: ", destination)
+        print("Destination is frontier: ", self.isFrontierCell(destination[0][0], destination[0][1]))
         return True, destination[0]
 
 
