@@ -1,7 +1,6 @@
 import rospy
 import threading
 import math
-import csv
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg  import Pose2D
 from comp0037_mapper.msg import *
@@ -20,18 +19,17 @@ class ExplorerNodeBase(object):
 
 	# Create necessary queues
         self.FrontierList = []
-        
+
         # Get the drive robot service
         rospy.loginfo('Waiting for service drive_to_goal')
         rospy.wait_for_service('drive_to_goal')
         self.driveToGoalService = rospy.ServiceProxy('drive_to_goal', Goal)
         rospy.loginfo('Got the drive_to_goal service')
-        self.time_activate = threading.Timer(5.0,self.computeEntropy)
+        self.timer_restart()
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
-        self.time_activate.start()
-        self.pose = Pose2D()
+	self.pose = Pose2D()
         # Subscribe to odometry to get pose data
         self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
 
@@ -214,7 +212,7 @@ class ExplorerNodeBase(object):
                 if newDestinationAvailable is True:
                     print 'newDestination = ' + str(newDestination)
                     newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
-                    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
+		    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
 		    
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
@@ -241,8 +239,9 @@ class ExplorerNodeBase(object):
             if explorerThread.hasCompleted() is True:
                 explorerThread.join()
                 keepRunning = False
-
+                    
     def computeEntropy(self):
+        print('entropy')
         entropy=0
         unknownCells = 0
         for x in range(0, self.occupancyGrid.getWidthInCells()):
@@ -256,9 +255,19 @@ class ExplorerNodeBase(object):
         entropy -= pCMap * math.log(pCMap)
         
         #save data
-        dir = '/home/ros_user/catkin_ws_cw2/data/entropy_data'
-        print('Saving entropy')
-        with open(dir,'a') as myfile:
-            wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
-            wr.writerow([entropy]) 
-            
+        f = open("entropy_data.txt","a+")
+        f.write("%d\n" % entropy)
+        f.close()     
+        self.timer_restart()
+    
+    def timer_restart(self):
+        self.entropy_calc = threading.Timer(5,self.computeEntropy)
+        self.entropy_calc.deamon = True
+        self.entropy_calc.start()
+        pass
+
+
+
+
+
+
