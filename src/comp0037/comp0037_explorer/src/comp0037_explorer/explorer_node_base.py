@@ -30,6 +30,7 @@ class ExplorerNodeBase(object):
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
+        self.time_activate.start()
         self.pose = Pose2D()
         # Subscribe to odometry to get pose data
         self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
@@ -223,7 +224,6 @@ class ExplorerNodeBase(object):
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
-        self.time_activate.start()
         keepRunning = True
         
         while (rospy.is_shutdown() is False) & (keepRunning is True):
