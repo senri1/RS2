@@ -9,8 +9,8 @@ class ExplorerNode(ExplorerNodeBase):
 
     def __init__(self):
         ExplorerNodeBase.__init__(self)
-
         self.blackList = []
+        print('Using defualt explorer')
 
     def updateFrontiers(self):
         pass

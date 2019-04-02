@@ -33,6 +33,7 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         ExplorerNodeBase.__init__(self)
         self.blackList = []
         self.visitedFrontiers = []
+        print('Using WFD explorer')
 
     def updateFrontiers(self):
         print('Updating frontiers')
@@ -195,16 +196,32 @@ class ExplorerNodeWFD(ExplorerNodeBase):
         return marked_as
     
     def getAllAdjacentCells(self, p):
-        # returns a list of adjacent cells 
+        # returns a list of adjacent cells if they are in grid
         AdjacentCells = []
-        AdjacentCells.append((p[0] - 1, p[1] - 1))
-        AdjacentCells.append((p[0] - 0, p[1] - 1))
-        AdjacentCells.append((p[0] + 1, p[1] - 1))
-        AdjacentCells.append((p[0] + 1, p[1] - 0))
-        AdjacentCells.append((p[0] + 1, p[1] + 1))
-        AdjacentCells.append((p[0] + 0, p[1] + 1))
-        AdjacentCells.append((p[0] - 1, p[1] + 1))
-        AdjacentCells.append((p[0] - 1, p[1] + 0))
+        if ( p[0] - 1 >= 0) & ((p[0] - 1) < self.occupancyGrid.getWidthInCells()) & ((p[1] - 1) >= 0) & ((p[1] - 1) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] - 1, p[1] - 1))
+
+        if ( p[0] - 0 >= 0) & ((p[0] - 0) < self.occupancyGrid.getWidthInCells()) & ((p[1] - 1) >= 0) & ((p[1] - 1) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] - 0, p[1] - 1))
+
+        if ( p[0] + 1 >= 0) & ((p[0] + 1) < self.occupancyGrid.getWidthInCells()) & ((p[1] - 1) >= 0) & ((p[1] - 1) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] + 1, p[1] - 1))
+
+        if ( p[0] + 1 >= 0) & ((p[0] + 1) < self.occupancyGrid.getWidthInCells()) & ((p[1] - 0) >= 0) & ((p[1] - 0) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] + 1, p[1] - 0))
+
+        if ( p[0] + 1 >= 0) & ((p[0] + 1) < self.occupancyGrid.getWidthInCells()) & ((p[1] + 1) >= 0) & ((p[1] + 1) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] + 1, p[1] + 1))
+
+        if ( p[0] - 0 >= 0) & ((p[0] - 0) < self.occupancyGrid.getWidthInCells()) & ((p[1] + 1) >= 0) & ((p[1] + 1) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] + 0, p[1] + 1))
+
+        if ( p[0] - 1 >= 0) & ((p[0] - 1) < self.occupancyGrid.getWidthInCells()) & ((p[1] + 1) >= 0) & ((p[1] + 1) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] - 1, p[1] + 1))
+
+        if ( p[0] - 1 >= 0) & ((p[0] - 1) < self.occupancyGrid.getWidthInCells()) & ((p[1] - 0) >= 0) & ((p[1] - 0) < self.occupancyGrid.getHeightInCells()):
+            AdjacentCells.append((p[0] - 1, p[1] + 0))
+
         return AdjacentCells
 
     def checkAdjacent(self, cells):
