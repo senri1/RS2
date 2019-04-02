@@ -15,8 +15,8 @@ class ReactivePlannerController(PlannerControllerBase):
 
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
         self.gridUpdateLock =  threading.Condition()
-        self.time_activate = threading.Timer(5.0,self.computeEntropy)
-        self.time_activate.start()
+        # self.time_activate = threading.Timer(5.0,self.computeEntropy)
+        # self.time_activate.start()
 
     def mapUpdateCallback(self, mapUpdateMessage):
 
@@ -108,29 +108,6 @@ class ReactivePlannerController(PlannerControllerBase):
         return goalReached
 
 
-    def checkIfCellIsUnknown(self, x, y):
-        newX = x 
-        newY = y
-        return (newX >= 0) & (newX < self.occupancyGrid.getWidthInCells()) \
-            & (newY >= 0) & (newY < self.occupancyGrid.getHeightInCells()) \
-            & (self.occupancyGrid.getCell(newX, newY) == 0.5)
-                    
-    def computeEntropy(self):
-        entropy=0
-        unknownCells = 0
-        for x in range(0, self.occupancyGrid.getWidthInCells()):
-            for y in range(0, self.occupancyGrid.getHeightInCells()):
-                if self.checkIfCellIsUnknown(x, y) == True:
-                    unknownCells += 1
-        
-        pCMap = math.log(2)* abs(unknownCells)
-
-        #for every realisation map???
-        entropy -= pCMap * math.log(pCMap)
-        
-        #save data
-        f = open("entropy_data.txt","a+")
-        f.write("%d\n" % entropy)
-        f.close()        
+       
 
     

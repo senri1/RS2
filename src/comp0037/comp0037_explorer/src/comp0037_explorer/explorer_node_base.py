@@ -1,28 +1,37 @@
 import rospy
 import threading
 import math
-
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg  import Pose2D
 from comp0037_mapper.msg import *
 from comp0037_mapper.srv import *
 from comp0037_reactive_planner_controller.srv import *
 from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
+from Queue import Queue
+from collections import deque
 
 class ExplorerNodeBase(object):
 
     def __init__(self):
         rospy.init_node('explorer')
 
+	# Create necessary queues
+        self.FrontierList = []
+
         # Get the drive robot service
         rospy.loginfo('Waiting for service drive_to_goal')
         rospy.wait_for_service('drive_to_goal')
         self.driveToGoalService = rospy.ServiceProxy('drive_to_goal', Goal)
         rospy.loginfo('Got the drive_to_goal service')
-
+        self.time_activate = threading.Timer(5.0,self.computeEntropy)
         self.waitForGoal =  threading.Condition()
         self.waitForDriveCompleted =  threading.Condition()
         self.goal = None
+	self.pose = Pose2D()
+        # Subscribe to odometry to get pose data
+        self.currentOdometrySubscriber = rospy.Subscriber('/robot0/odom', Odometry, self.odometryCallback)
 
         # Subscribe to get the map update messages
         self.mapUpdateSubscriber = rospy.Subscriber('updated_map', MapUpdate, self.mapUpdateCallback)
@@ -70,6 +79,16 @@ class ExplorerNodeBase(object):
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
+
+    
+    def odometryCallback(self, odometry):
+        odometryPose = odometry.pose.pose
+        pose = Pose2D()
+        position = odometryPose.position
+        pose.x = position.x
+        pose.y = position.y
+        pose.theta = 0
+        self.pose = pose
 
     # This method determines if a cell is a frontier cell or not. A
     # frontier cell is open and has at least one neighbour which is
@@ -185,8 +204,7 @@ class ExplorerNodeBase(object):
                 # Special case. If this is the first time everything
                 # has started, stdr needs a kicking to generate laser
                 # messages. To do this, we get the robot to
-                
-
+		
                 # Create a new robot waypoint if required
                 newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
 
@@ -194,7 +212,8 @@ class ExplorerNodeBase(object):
                 if newDestinationAvailable is True:
                     print 'newDestination = ' + str(newDestination)
                     newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
-                    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
+		    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
+		    
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
@@ -203,7 +222,7 @@ class ExplorerNodeBase(object):
     def run(self):
 
         explorerThread = ExplorerNodeBase.ExplorerThread(self)
-
+        self.time_activate.start()
         keepRunning = True
         
         while (rospy.is_shutdown() is False) & (keepRunning is True):
@@ -221,6 +240,23 @@ class ExplorerNodeBase(object):
             if explorerThread.hasCompleted() is True:
                 explorerThread.join()
                 keepRunning = False
+                    
+    def computeEntropy(self):
+        entropy=0
+        unknownCells = 0
+        for x in range(0, self.occupancyGrid.getWidthInCells()):
+            for y in range(0, self.occupancyGrid.getHeightInCells()):
+                if self.checkIfCellIsUnknown(x, y,0,0) == True:
+                    unknownCells += 1
+        
+        pCMap = math.log(2)* abs(unknownCells)
 
+        #for every realisation map???
+        entropy -= pCMap * math.log(pCMap)
+        
+        #save data
+        f = open("entropy_data.txt","a+")
+        f.write("%d\n" % entropy)
+        f.close()     
             
             
