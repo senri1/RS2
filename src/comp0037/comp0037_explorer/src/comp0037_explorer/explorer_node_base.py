@@ -9,11 +9,22 @@ from comp0037_reactive_planner_controller.srv import *
 from comp0037_reactive_planner_controller.occupancy_grid import OccupancyGrid
 from comp0037_reactive_planner_controller.grid_drawer import OccupancyGridDrawer
 from geometry_msgs.msg  import Twist
+from Queue import Queue
+from collections import deque
 
 class ExplorerNodeBase(object):
 
     def __init__(self):
         rospy.init_node('explorer')
+
+	# Create necessary queues
+	self.MapOpen = deque()
+        self.queueM = deque()
+        self.queueF = deque()
+        self.MapClose = deque()
+        self.FrontierOpen = deque()
+        self.FroniterClose = deque()
+        self.FrontierList = []
 
         # Get the drive robot service
         rospy.loginfo('Waiting for service drive_to_goal')
@@ -70,7 +81,7 @@ class ExplorerNodeBase(object):
         self.deltaOccupancyGrid.updateGridFromVector(msg.deltaOccupancyGrid)
         
         # Update the frontiers
-        self.updateFrontiers()
+        self.updateFrontiers(self.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.pose.x,self.pose.y)))
 
         # Flag there's something to show graphically
         self.visualisationUpdateRequired = True
@@ -199,18 +210,17 @@ class ExplorerNodeBase(object):
                 # Special case. If this is the first time everything
                 # has started, stdr needs a kicking to generate laser
                 # messages. To do this, we get the robot to
-                
-
+		
                 # Create a new robot waypoint if required
-                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination()
+                newDestinationAvailable, newDestination = self.explorer.chooseNewDestination(self.explorer.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.explorer.pose.x,self.explorer.pose.y)))
 
                 # Convert to world coordinates, because this is what the robot understands
                 if newDestinationAvailable is True:
                     print 'newDestination = ' + str(newDestination)
                     newDestinationInWorldCoordinates = self.explorer.occupancyGrid.getWorldCoordinatesFromCellCoordinates(newDestination)
-                    print('WROK')
-		    print(self.explorer.occupancyGrid.getCellCoordinatesFromWorldCoordinates((self.explorer.pose.x,self.explorer.pose.y)))
+		    print('before')
 		    attempt = self.explorer.sendGoalToRobot(newDestinationInWorldCoordinates)
+		    print('after')
                     self.explorer.destinationReached(newDestination, attempt)
                 else:
                     self.completed = True
