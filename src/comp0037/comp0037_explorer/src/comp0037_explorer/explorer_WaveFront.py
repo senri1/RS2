@@ -32,7 +32,7 @@ class ExplorerNodeWFD(ExplorerNodeBase):
     def __init__(self):
         ExplorerNodeBase.__init__(self)
         self.blackList = []
-        self.visitedFrontiers = []
+        #self.visitedFrontiers = []
 
     def updateFrontiers(self):
         print('Updating frontiers')
@@ -138,9 +138,9 @@ class ExplorerNodeWFD(ExplorerNodeBase):
                 for blacklisted in self.blackList:
                     if blacklisted == candidate:
                         AddCandidate = False
-                for visited in self.visitedFrontiers:
-                    if visited == candidate:
-                        AddCandidate = False
+                #for visited in self.visitedFrontiers:
+                #    if visited == candidate:
+                #        AddCandidate = False
                 if AddCandidate == True:
                     median.append((candidate, Frontier))
 
@@ -165,8 +165,8 @@ class ExplorerNodeWFD(ExplorerNodeBase):
 
     def destinationReached(self, goal, goalReached):
         # if the goal was not reached add the goal to blacklist
-        if goalReached is True:
-            self.visitedFrontiers.append(goal)
+        #if goalReached is True:
+        #    self.visitedFrontiers.append(goal)
         if goalReached is False:
             self.blackList.append(goal)
 
