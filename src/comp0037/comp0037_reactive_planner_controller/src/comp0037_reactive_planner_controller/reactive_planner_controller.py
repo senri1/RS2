@@ -25,10 +25,10 @@ class ReactivePlannerController(PlannerControllerBase):
         self.occupancyGrid.updateGridFromVector(mapUpdateMessage.occupancyGrid)
         self.planner.handleChangeToOccupancyGrid()
         self.gridUpdateLock.release()
-        # if time.time() - self.time_count > 5:
-        #     print('5 seconds')
-        #     self.computeEntropy()
-        #     self.time_count = time.time()
+        if time.time() - self.time_count > 5:
+             print('5 seconds')
+             self.computeEntropy()
+             self.time_count = time.time()
         # If we are not currently following any route, drop out here.
         if self.currentPlannedPath is None:
             return
@@ -127,10 +127,12 @@ class ReactivePlannerController(PlannerControllerBase):
 
         #for every realisation map???
         entropy -= pCMap * math.log(pCMap)
-        
+        print('Saving entropy data')
         #save data
-        f = open("entropy_data.txt","a+")
-        f.write("%d\n" % entropy)
-        f.close()        
+        dir = "/home/ros_user/catkin_ws_cw2/data/entropy_data"
+        with open(dir,'a') as myfile:
+            wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
+            wr.writerow(entropy)
+     
 
     

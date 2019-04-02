@@ -2,11 +2,11 @@
 
 import rospy
 
-from comp0037_explorer.explorer_WaveFront import ExplorerNodeWFD
+from comp0037_explorer.explorer_node import ExplorerNode
 
 if __name__ == '__main__':
     try:
-        explorerNode = ExplorerNodeWFD()
+        explorerNode = ExplorerNode()
         explorerNode.run()
     except rospy.ROSInterruptException:
         pass

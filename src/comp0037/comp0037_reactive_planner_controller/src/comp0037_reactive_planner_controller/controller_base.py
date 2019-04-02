@@ -110,7 +110,7 @@ class ControllerBase(object):
                 self.stopRobot()
                 # SAVE DATA
                 data = [path.travelCost, path.angleTurned, len(path.waypoints), 0]
-                # save2csv(data)
+                save2csv(data)
                 return False
             check,distance,theta,time = self.driveToWaypoint(waypoint)
             path_distance = path_distance +distance
@@ -121,7 +121,7 @@ class ControllerBase(object):
                 # SAVE DATA
                 time_second = (time_count) * 0.1
                 data = [path.travelCost, path.angleTurned, len(path.waypoints),path_distance,path_theta,time_second,  0]
-                # save2csv(data)
+                save2csv(data)
                 return False
                 
             # Handle ^C
@@ -136,7 +136,7 @@ class ControllerBase(object):
         time_second = (time_count) * 0.1
         # SAVE DATA
         data = [path.travelCost, path.angleTurned, len(path.waypoints),path_distance,path_theta,time_second, goalReached]
-        # save2csv(data)
+        save2csv(data)
         
         # Finish off by rotating the robot to the final configuration
         return goalReached
@@ -152,10 +152,9 @@ def save2csv(data):
     # if the goal was reached or not.
     # ADD the robot distance travelled, robot angle turned and the total
     # ROS time taken please.
-    
+    print('Saving performance data')
     title = 'initial_frontier_data'
     dir = '/home/ros_user/catkin_ws_cw2/data/' + title
-    print('saving data')
     with open(dir,'a') as myfile:
             wr = csv.writer(myfile,quoting=csv.QUOTE_ALL)
             wr.writerow(data)
